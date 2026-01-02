@@ -27,4 +27,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 // Khusus Pelanggan
 Route::middleware(['auth', 'role:pelanggan'])->prefix('pelanggan')->group(function () {
     Route::get('/dashboard', [PelangganController::class, 'index']);
+    Route::get('/change-password', [AuthController::class, 'editPassword'])->name('password.edit');
+    Route::post('/change-password', [AuthController::class, 'updatePassword'])->name('password.update');
 });

@@ -19,20 +19,23 @@ class AdminController extends Controller
      */
     public function dashboard()
     {
+        // Set timezone ke Jakarta agar sinkron dengan jam lokal (WIB)
+        $today = Carbon::now('Asia/Jakarta');
+        
         $customers = Customer::with('paket')->get();
-        $today = Carbon::now();
         
         $bulanIndo = [
-            1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni',
+            7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
 
-        // Memproses status pembayaran setiap pelanggan
         $dataPelanggan = $customers->map(function($c) use ($today, $bulanIndo) {
-            // Tentukan periode yang harus dicek:
-            // Jika hari ini belum masuk tanggal jatuh tempo, cek bulan lalu.
-            // Jika sudah masuk/lewat tanggal jatuh tempo, cek bulan ini.
-            if ($today->day < (int) $c->jatuh_tempo) {
+            $tglJatuhTempo = (int) $c->jatuh_tempo;
+
+            // Logika Periode: 
+            // Jika hari ini < tanggal jatuh tempo, cek bulan lalu.
+            // Jika hari ini >= tanggal jatuh tempo, cek bulan ini.
+            if ($today->day < $tglJatuhTempo) {
                 $periode = $today->copy()->subMonth();
             } else {
                 $periode = $today;
@@ -41,7 +44,6 @@ class AdminController extends Controller
             $bulanTarget = $bulanIndo[$periode->month];
             $tahunTarget = $periode->year;
 
-            // Cek ke tabel payments
             $isLunas = Payment::where('customer_id', $c->id)
                         ->where('bulan', $bulanTarget)
                         ->where('tahun', $tahunTarget)
@@ -59,7 +61,6 @@ class AdminController extends Controller
             ];
         });
 
-        // Statistik Ringkas
         $stats = [
             'total' => $dataPelanggan->count(),
             'lunas' => $dataPelanggan->where('status', 'Lunas')->count(),

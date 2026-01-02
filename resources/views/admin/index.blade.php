@@ -35,7 +35,7 @@
                         </td>
                         <td class="text-center">
                             <span class="badge bg-danger-subtle text-danger px-3 py-2 border border-danger-subtle">
-                                Tgl {{ $c->jatuh_tempo }}
+                                Tanggal {{ $c->jatuh_tempo }}
                             </span>
                         </td>
                         <td>

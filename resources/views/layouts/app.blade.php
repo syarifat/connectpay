@@ -172,6 +172,11 @@
                                     <span class="fw-bold text-capitalize text-primary">{{ auth()->user()->role }}</span>
                                 </li>
                                 <li>
+                                    <a class="dropdown-item d-flex align-items-center" href="{{ route('password.edit') }}">
+                                        <i class="bi bi-key me-2"></i> Ganti Password
+                                    </a>
+                                </li>
+                                <li>
                                     <a class="dropdown-item text-danger d-flex align-items-center" href="/logout">
                                         <i class="bi bi-box-arrow-right me-2"></i> Keluar
                                     </a>

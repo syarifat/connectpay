@@ -16,7 +16,7 @@
             <form action="/login" method="POST">
                 @csrf
                 <div class="mb-3">
-                    <label class="form-label text-secondary">Username / ID Pelanggan</label>
+                    <label class="form-label text-secondary">ID Pelanggan</label>
                     <input type="text" name="username" class="form-control form-control-lg border-info-subtle" required>
                 </div>
                 <div class="mb-4">

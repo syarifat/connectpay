@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold text-secondary">Dashboard Monitoring Pembayaran</h3>
-        <span class="text-muted">{{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</span>
+        <span class="text-muted">{{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y') }}</span>
     </div>
 
     <div class="row mb-4">
@@ -24,7 +24,7 @@
                 <div class="d-flex align-items-center">
                     <i class="bi bi-check-circle-fill fs-1 me-3"></i>
                     <div>
-                        <h6 class="mb-0 opacity-75">Sudah Lunas (Periode Ini)</h6>
+                        <h6 class="mb-0 opacity-75">Sudah Lunas</h6>
                         <h3 class="fw-bold mb-0">{{ $stats['lunas'] }}</h3>
                     </div>
                 </div>
@@ -43,11 +43,11 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm p-4 bg-white">
+    <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 15px;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold text-primary mb-0">Daftar Status Pembayaran Pelanggan</h5>
             <div class="badge bg-info-subtle text-info px-3 py-2">
-                Menampilkan Periode Aktif Masing-Masing Pelanggan
+                Monitoring Periode Aktif
             </div>
         </div>
         
@@ -76,7 +76,7 @@
                             Rp {{ number_format($d->paket_harga, 0, ',', '.') }}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-light text-dark border">Tgl {{ $d->jatuh_tempo }}</span>
+                            <span class="badge bg-light text-dark border">Tanggal {{ $d->jatuh_tempo }}</span>
                         </td>
                         <td>
                             <span class="text-primary fw-medium">{{ $d->periode_aktif }}</span>
@@ -94,11 +94,18 @@
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
-                                <a href="{{ route('admin.pembayaran', $d->id) }}" class="btn btn-sm btn-outline-primary" title="Input Pembayaran">
+                                <a href="{{ route('admin.pembayaran', $d->id) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-cash-stack"></i> Bayar
                                 </a>
-                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $d->nomor_wa) }}?text=Halo%20{{ $d->nama }},%20mengingatkan%20tagihan%20internet%20periode%20{{ $d->periode_aktif }}%20sebesar%20Rp%20{{ number_format($d->paket_harga, 0, ',', '.') }}%20belum%20terbayar.%20Terima%20kasih." 
-                                   target="_blank" class="btn btn-sm btn-outline-success {{ $d->status == 'Lunas' ? 'disabled' : '' }}" title="Kirim Pengingat WA">
+                                
+                                @php
+                                    $phone = preg_replace('/[^0-9]/', '', $d->nomor_wa);
+                                    if (strpos($phone, '0') === 0) { $phone = '62' . substr($phone, 1); }
+                                    $msg = "Halo " . $d->nama . ", tagihan internet periode " . $d->periode_aktif . " sebesar Rp " . number_format($d->paket_harga, 0, ',', '.') . " belum terbayar. Terima kasih.";
+                                @endphp
+                                
+                                <a href="https://wa.me/{{ $phone }}?text={{ urlencode($msg) }}" 
+                                   target="_blank" class="btn btn-sm btn-outline-success {{ $d->status == 'Lunas' ? 'disabled' : '' }}">
                                     <i class="bi bi-whatsapp"></i>
                                 </a>
                             </div>
