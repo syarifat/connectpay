@@ -13,8 +13,8 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         \App\Models\User::create([
-            'username' => 'admin',
-            'password' => bcrypt('password'),
+            'username' => 'btngsrn',
+            'password' => bcrypt('segopatik'),
             'role' => 'admin'
         ]);
     }

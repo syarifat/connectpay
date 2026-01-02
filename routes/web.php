@@ -17,7 +17,7 @@ Route::get('/logout', [AuthController::class, 'logout']);
 
 // Khusus Admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::resource('pelanggan', AdminController::class);
     Route::get('/pelanggan/pembayaran/{id}', [AdminController::class, 'pembayaran'])->name('admin.pembayaran');
     Route::post('/pelanggan/pembayaran', [AdminController::class, 'storePembayaran'])->name('admin.pembayaran.store');
