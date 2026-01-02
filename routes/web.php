@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PelangganController;
+use App\Http\Controllers\PaketController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -16,10 +17,11 @@ Route::get('/logout', [AuthController::class, 'logout']);
 
 // Khusus Admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'index']);
+    Route::get('admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::resource('pelanggan', AdminController::class);
     Route::get('/pelanggan/pembayaran/{id}', [AdminController::class, 'pembayaran'])->name('admin.pembayaran');
     Route::post('/pelanggan/pembayaran', [AdminController::class, 'storePembayaran'])->name('admin.pembayaran.store');
+    Route::resource('pakets', PaketController::class);
 });
 
 // Khusus Pelanggan

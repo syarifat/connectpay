@@ -10,25 +10,45 @@
 
         <div class="col-md-4 mb-4">
             <div class="card-custom p-4 text-center bg-white border-bottom border-4 {{ $isLunas ? 'border-success' : 'border-danger' }}">
-                <p class="mb-2 text-muted fw-semibold">Status Tagihan ({{ $bulanIni }} {{ date('Y') }})</p>
+                <p class="mb-2 text-muted fw-semibold">Status Tagihan ({{ $bulanTarget }} {{ $tahunTarget }})</p>
                 
+                <div class="mb-3 p-2 bg-light rounded border border-dashed">
+                    <small class="text-muted d-block">Masa Aktif Layanan:</small>
+                    <span class="fw-bold text-dark">
+                        @php
+                            // Mengambil angka bulan berdasarkan nama bulan target
+                            $months = ['Januari'=>1,'Februari'=>2,'Maret'=>3,'April'=>4,'Mei'=>5,'Juni'=>6,'Juli'=>7,'Agustus'=>8,'September'=>9,'Oktober'=>10,'November'=>11,'Desember'=>12];
+                            $monthNum = $months[$bulanTarget];
+                            
+                            // Membuat object Carbon untuk tanggal mulai dan berakhir
+                            $start = \Carbon\Carbon::create($tahunTarget, $monthNum, $customer->jatuh_tempo);
+                            $end = $start->copy()->addMonth()->subDay();
+                        @endphp
+                        {{ $start->translatedFormat('d M Y') }} - {{ $end->translatedFormat('d M Y') }}
+                    </span>
+                </div>
+
                 <div class="mb-3">
-                    <span class="text-secondary small">Jatuh Tempo:</span><br>
+                    <span class="text-secondary small">Batas Pembayaran:</span><br>
                     <span class="fw-bold {{ $isLunas ? 'text-success' : 'text-danger' }} fs-5">
-                        {{ $customer->jatuh_tempo }} {{ $bulanIni }} {{ date('Y') }}
+                        {{ $customer->jatuh_tempo }} {{ $bulanTarget }} {{ $tahunTarget }}
                     </span>
                 </div>
 
                 @if($isLunas)
-                    <h2 class="text-success fw-bold">TERBAYAR</h2>
-                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3.5rem;"></i>
+                    <div class="py-2">
+                        <h2 class="text-success fw-bold mb-0">TERBAYAR</h2>
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                    </div>
                     <hr>
-                    <p class="small text-secondary mb-0">Terima kasih telah melakukan pembayaran tepat waktu.</p>
+                    <p class="small text-secondary mb-0">Terima kasih! Layanan Anda aktif hingga <strong>{{ $end->translatedFormat('d F Y') }}</strong>.</p>
                 @else
-                    <h2 class="text-danger fw-bold">BELUM BAYAR</h2>
-                    <i class="bi bi-exclamation-circle-fill text-danger" style="font-size: 3.5rem;"></i>
+                    <div class="py-2">
+                        <h2 class="text-danger fw-bold mb-0">BELUM BAYAR</h2>
+                        <i class="bi bi-exclamation-circle-fill text-danger" style="font-size: 3rem;"></i>
+                    </div>
                     <hr>
-                    <p class="small text-secondary mb-0">Segera hubungi Admin untuk melakukan pembayaran.</p>
+                    <p class="small text-secondary mb-0">Segera lakukan pembayaran untuk memperpanjang masa aktif.</p>
                 @endif
             </div>
         </div>

@@ -5,34 +5,82 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\Paket; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Carbon\Carbon; // Tambahan untuk logika tanggal
 
 class AdminController extends Controller
 {
     /**
-     * Menampilkan daftar semua pelanggan
+     * Dashboard Monitoring Pembayaran (Baru)
      */
+    public function dashboard()
+    {
+        $customers = Customer::with('paket')->get();
+        $today = Carbon::now();
+        
+        $bulanIndo = [
+            1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+
+        // Memproses status pembayaran setiap pelanggan
+        $dataPelanggan = $customers->map(function($c) use ($today, $bulanIndo) {
+            // Tentukan periode yang harus dicek:
+            // Jika hari ini belum masuk tanggal jatuh tempo, cek bulan lalu.
+            // Jika sudah masuk/lewat tanggal jatuh tempo, cek bulan ini.
+            if ($today->day < (int) $c->jatuh_tempo) {
+                $periode = $today->copy()->subMonth();
+            } else {
+                $periode = $today;
+            }
+
+            $bulanTarget = $bulanIndo[$periode->month];
+            $tahunTarget = $periode->year;
+
+            // Cek ke tabel payments
+            $isLunas = Payment::where('customer_id', $c->id)
+                        ->where('bulan', $bulanTarget)
+                        ->where('tahun', $tahunTarget)
+                        ->exists();
+
+            return (object) [
+                'id' => $c->id,
+                'id_pelanggan' => $c->id_pelanggan,
+                'nama' => $c->nama,
+                'nomor_wa' => $c->nomor_wa,
+                'jatuh_tempo' => $c->jatuh_tempo,
+                'periode_aktif' => $bulanTarget . ' ' . $tahunTarget,
+                'status' => $isLunas ? 'Lunas' : 'Belum Bayar',
+                'paket_harga' => $c->paket ? $c->paket->harga : 0
+            ];
+        });
+
+        // Statistik Ringkas
+        $stats = [
+            'total' => $dataPelanggan->count(),
+            'lunas' => $dataPelanggan->where('status', 'Lunas')->count(),
+            'belum' => $dataPelanggan->where('status', 'Belum Bayar')->count(),
+        ];
+
+        return view('admin.dashboard', compact('dataPelanggan', 'stats'));
+    }
+
     public function index()
     {
-        // Mengambil semua data pelanggan untuk ditampilkan di tabel utama
-        $customers = Customer::all();
+        $customers = Customer::with('paket')->get(); // Eager load paket
         return view('admin.index', compact('customers'));
     }
 
-    /**
-     * Menampilkan form tambah pelanggan
-     */
     public function create()
     {
-        return view('admin.create');
+        $pakets = Paket::all(); // Mengambil data paket untuk dropdown
+        return view('admin.create', compact('pakets'));
     }
 
-    /**
-     * Menyimpan data pelanggan baru dan membuatkan akun user
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -40,21 +88,19 @@ class AdminController extends Controller
             'nama'         => 'required',
             'nik'          => 'required|numeric',
             'nomor_wa'     => 'required',
-            'paket'        => 'required',
-            'jatuh_tempo'  => 'required|numeric|min:1|max:31', // Validasi jatuh tempo 1-31
+            'paket_id'     => 'required|exists:pakets,id', 
+            'jatuh_tempo'  => 'required|numeric|min:1|max:31',
             'foto_rumah'   => 'image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
         DB::beginTransaction();
         try {
-            // 1. Buat User untuk login (Username = ID Pelanggan)
             $user = User::create([
                 'username' => $request->id_pelanggan,
-                'password' => Hash::make('123456'), // Password default
+                'password' => Hash::make('123456'),
                 'role'     => 'pelanggan',
             ]);
 
-            // 2. Handle Upload Foto
             $namaFoto = null;
             if ($request->hasFile('foto_rumah')) {
                 $foto = $request->file('foto_rumah');
@@ -62,7 +108,6 @@ class AdminController extends Controller
                 $foto->move(public_path('uploads/rumah'), $namaFoto);
             }
 
-            // 3. Simpan Detail Pelanggan ke tabel customers
             Customer::create([
                 'user_id'       => $user->id,
                 'id_pelanggan'  => $request->id_pelanggan,
@@ -70,33 +115,27 @@ class AdminController extends Controller
                 'nik'           => $request->nik,
                 'nomor_wa'      => $request->nomor_wa,
                 'alamat'        => $request->alamat,
-                'paket'         => $request->paket,
-                'jatuh_tempo'   => $request->jatuh_tempo, // Menyimpan kolom jatuh tempo
+                'paket_id'      => $request->paket_id, 
+                'jatuh_tempo'   => $request->jatuh_tempo,
                 'pppoe_profile' => $request->pppoe_profile,
                 'foto_rumah'    => $namaFoto ? 'uploads/rumah/' . $namaFoto : null,
             ]);
 
             DB::commit();
             return redirect('/admin/pelanggan')->with('success', 'Pelanggan Berhasil Ditambahkan!');
-
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Menampilkan form edit pelanggan
-     */
     public function edit($id)
     {
         $customer = Customer::findOrFail($id);
-        return view('admin.edit', compact('customer'));
+        $pakets = Paket::all(); 
+        return view('admin.edit', compact('customer', 'pakets'));
     }
     
-    /**
-     * Memperbarui data pelanggan
-     */
     public function update(Request $request, $id)
     {
         $customer = Customer::findOrFail($id);
@@ -105,88 +144,60 @@ class AdminController extends Controller
             'nama'        => 'required',
             'nik'         => 'required|numeric',
             'nomor_wa'    => 'required',
-            'paket'       => 'required',
-            'jatuh_tempo' => 'required|numeric|min:1|max:31', // Validasi jatuh tempo 1-31
+            'paket_id'    => 'required|exists:pakets,id',
+            'jatuh_tempo' => 'required|numeric|min:1|max:31',
             'foto_rumah'  => 'image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
-        // Handle Upload Foto Baru jika ada
         if ($request->hasFile('foto_rumah')) {
-            // Hapus foto lama jika ada fisiknya di folder
             if ($customer->foto_rumah && File::exists(public_path($customer->foto_rumah))) {
                 File::delete(public_path($customer->foto_rumah));
             }
-
             $foto = $request->file('foto_rumah');
             $namaFoto = time() . '_' . $customer->id_pelanggan . '.' . $foto->getClientOriginalExtension();
             $foto->move(public_path('uploads/rumah'), $namaFoto);
             $customer->foto_rumah = 'uploads/rumah/' . $namaFoto;
         }
 
-        // Update data pelanggan di database
         $customer->update([
             'nama'          => $request->nama,
             'nik'           => $request->nik,
             'nomor_wa'      => $request->nomor_wa,
             'alamat'        => $request->alamat,
-            'paket'         => $request->paket,
-            'jatuh_tempo'   => $request->jatuh_tempo, // Update jatuh tempo
+            'paket_id'      => $request->paket_id,
+            'jatuh_tempo'   => $request->jatuh_tempo,
             'pppoe_profile' => $request->pppoe_profile,
             'foto_rumah'    => $customer->foto_rumah
         ]);
 
-        // Sinkronisasi nama di tabel Users (opsional)
         if ($customer->user) {
             $customer->user->update(['name' => $request->nama]);
         }
 
-        return redirect('/admin/pelanggan')->with('success', 'Data Pelanggan Berhasil Diperbarui!');
+        return redirect('/admin/pelanggan')->with('success', 'Data Berhasil Diperbarui!');
     }
 
-    /**
-     * Menghapus pelanggan, akun user, dan file foto secara permanen
-     */
     public function destroy($id)
     {
         $customer = Customer::findOrFail($id);
         $user = User::find($customer->user_id);
 
-        // 1. Hapus File Foto dari folder public
-        if ($customer->foto_rumah) {
-            $pathFoto = public_path($customer->foto_rumah);
-            if (File::exists($pathFoto)) {
-                File::delete($pathFoto);
-            }
+        if ($customer->foto_rumah && File::exists(public_path($customer->foto_rumah))) {
+            File::delete(public_path($customer->foto_rumah));
         }
 
-        // 2. Hapus data dari database
-        // Jika menggunakan user->delete(), data customer akan ikut terhapus (Cascade)
-        if ($user) {
-            $user->delete();
-        } else {
-            $customer->delete();
-        }
+        if ($user) { $user->delete(); } else { $customer->delete(); }
 
-        return redirect('/admin/pelanggan')->with('success', 'Data pelanggan dan file foto berhasil dihapus!');
+        return redirect('/admin/pelanggan')->with('success', 'Data dihapus!');
     }
 
-    /**
-     * Menampilkan riwayat pembayaran pelanggan tertentu
-     */
     public function pembayaran($id)
     {
-        $customer = Customer::findOrFail($id);
-        $payments = Payment::where('customer_id', $id)
-                    ->orderBy('tahun', 'desc')
-                    ->orderBy('bulan', 'desc')
-                    ->get();
-        
+        $customer = Customer::with('paket')->findOrFail($id);
+        $payments = Payment::where('customer_id', $id)->orderBy('id', 'desc')->get();
         return view('admin.pembayaran', compact('customer', 'payments'));
     }
 
-    /**
-     * Menyimpan input pembayaran baru dari Admin
-     */
     public function storePembayaran(Request $request)
     {
         $request->validate([
@@ -194,11 +205,11 @@ class AdminController extends Controller
             'bulan'         => 'required',
             'tahun'         => 'required',
             'nominal'       => 'required|numeric',
+            'metode'        => 'required',
             'tanggal_bayar' => 'required|date',
         ]);
 
         Payment::create($request->all());
-
-        return redirect()->back()->with('success', 'Pembayaran berhasil dicatat!');
+        return redirect()->back()->with('success', 'Pembayaran dicatat!');
     }
 }

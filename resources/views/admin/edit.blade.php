@@ -5,9 +5,7 @@
     <div class="col-md-10">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold text-primary">Edit Data Pelanggan</h4>
-            <a href="/admin/pelanggan" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Kembali
-            </a>
+            <a href="/admin/pelanggan" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
         </div>
         
         <div class="card-custom bg-white p-4">
@@ -17,7 +15,7 @@
                 <div class="row">
                     <div class="col-md-6 border-end">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">ID Pelanggan (Tetap)</label>
+                            <label class="form-label fw-bold">ID Pelanggan (Read-only)</label>
                             <input type="text" class="form-control bg-light" value="{{ $customer->id_pelanggan }}" readonly>
                         </div>
                         <div class="mb-3">
@@ -40,11 +38,13 @@
 
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Pilih Paket</label>
-                            <select name="paket" class="form-select" required>
-                                <option value="Lite - 10Mbps" {{ $customer->paket == 'Lite - 10Mbps' ? 'selected' : '' }}>Lite - 10Mbps</option>
-                                <option value="Basic - 20Mbps" {{ $customer->paket == 'Basic - 20Mbps' ? 'selected' : '' }}>Basic - 20Mbps</option>
-                                <option value="Pro - 50Mbps" {{ $customer->paket == 'Pro - 50Mbps' ? 'selected' : '' }}>Pro - 50Mbps</option>
+                            <label class="form-label fw-bold">Pilih Paket Internet</label>
+                            <select name="paket_id" class="form-select" required>
+                                @foreach($pakets as $p)
+                                    <option value="{{ $p->id }}" {{ $customer->paket_id == $p->id ? 'selected' : '' }}>
+                                        {{ $p->nama }} ({{ $p->speed }}) - Rp {{ number_format($p->harga, 0, ',', '.') }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="mb-3">
@@ -57,29 +57,18 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Foto Rumah</label>
-                            <div class="mb-2">
-                                @if($customer->foto_rumah)
-                                    <div class="position-relative d-inline-block">
-                                        <img src="{{ asset($customer->foto_rumah) }}" width="150" class="img-thumbnail shadow-sm border-info">
-                                        <span class="badge bg-primary position-absolute bottom-0 end-0">Foto Saat Ini</span>
-                                    </div>
-                                @else
-                                    <div class="p-3 border rounded bg-light text-center">
-                                        <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
-                                        <p class="small text-muted mb-0">Belum ada foto</p>
-                                    </div>
-                                @endif
-                            </div>
+                            @if($customer->foto_rumah)
+                                <div class="mb-2">
+                                    <img src="{{ asset($customer->foto_rumah) }}" width="100" class="img-thumbnail border-primary">
+                                </div>
+                            @endif
                             <input type="file" name="foto_rumah" class="form-control">
-                            <small class="text-muted italic">Pilih file baru jika ingin mengganti foto.</small>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-connect w-100 py-2 fw-bold">
-                        <i class="bi bi-save"></i> Simpan Perubahan Data
-                    </button>
+                    <button type="submit" class="btn btn-connect w-100 py-2 fw-bold"><i class="bi bi-save"></i> Simpan Perubahan</button>
                 </div>
             </form>
         </div>
