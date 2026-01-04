@@ -6,22 +6,29 @@ use App\Models\User;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Paket; 
+use App\Services\FonnteService; // Tambahkan ini
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Carbon\Carbon; // Tambahan untuk logika tanggal
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
+    protected $fonnte;
+
+    // Tambahkan Constructor untuk memanggil FonnteService
+    public function __construct(FonnteService $fonnte)
+    {
+        $this->fonnte = $fonnte;
+    }
+
     /**
-     * Dashboard Monitoring Pembayaran (Baru)
+     * Dashboard Monitoring Pembayaran
      */
     public function dashboard()
     {
-        // Set timezone ke Jakarta agar sinkron dengan jam lokal (WIB)
         $today = Carbon::now('Asia/Jakarta');
-        
         $customers = Customer::with('paket')->get();
         
         $bulanIndo = [
@@ -32,9 +39,6 @@ class AdminController extends Controller
         $dataPelanggan = $customers->map(function($c) use ($today, $bulanIndo) {
             $tglJatuhTempo = (int) $c->jatuh_tempo;
 
-            // Logika Periode: 
-            // Jika hari ini < tanggal jatuh tempo, cek bulan lalu.
-            // Jika hari ini >= tanggal jatuh tempo, cek bulan ini.
             if ($today->day < $tglJatuhTempo) {
                 $periode = $today->copy()->subMonth();
             } else {
@@ -70,15 +74,95 @@ class AdminController extends Controller
         return view('admin.dashboard', compact('dataPelanggan', 'stats'));
     }
 
+    // ==========================================
+    // FITUR WHATSAPP GATEWAY (MODIFIKASI BARU)
+    // ==========================================
+
+    public function sendAutoReminder(Request $request)
+    {
+        if ($request->query('key') !== 'connectpay123') {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $today = Carbon::now('Asia/Jakarta');
+        $bulanIndo = [
+            1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        $periode = $bulanIndo[$today->month] . ' ' . $today->year;
+
+        $customers = Customer::where('jatuh_tempo', $today->day)->get();
+
+        $sent = 0;
+        foreach ($customers as $c) {
+            $nominal = $c->paket ? number_format($c->paket->harga, 0, ',', '.') : '0';
+            $pesan = "Halo *{$c->nama}*,\n\nMengingatkan bahwa hari ini jatuh tempo pembayaran internet periode *{$periode}*.\nTagihan: *Rp {$nominal}*\nID: *{$c->id_pelanggan}*\n\nTerima kasih.";
+
+            // Menggunakan Service
+            $this->fonnte->sendMessage($c->nomor_wa, $pesan);
+            $sent++;
+        }
+
+        return response()->json(['status' => 'success', 'sent' => $sent]);
+    }
+
+    public function broadcast(Request $request)
+    {
+        $deviceData = $this->fonnte->getDeviceStatus();
+        $apiSuccess = $deviceData['status'] ?? false;
+        $actualStatus = $deviceData['device_status'] ?? 'disconnect';
+
+        if ($apiSuccess && $actualStatus === 'connect') {
+            $deviceStatus = 'connect';
+            $qrUrl = null;
+        } else {
+            $deviceStatus = 'disconnect';
+            $qrData = $this->fonnte->getQrCode();
+
+            // Debugging: Aktifkan ini jika gambar masih pecah untuk melihat isi respon Fonnte
+            // dd($qrData);
+
+            // Pastikan mengambil field 'url' atau 'result' sesuai respon API
+            $qrUrl = $qrData['url'] ?? ($qrData['result'] ?? null);
+        }
+
+        $customers = Customer::all();
+        return view('admin.broadcast', compact('customers', 'deviceStatus', 'qrUrl'));
+    }
+
+    public function sendBroadcast(Request $request)
+    {
+        $request->validate(['message' => 'required', 'target_type' => 'required']);
+
+        $targets = ($request->target_type == 'all') 
+                    ? Customer::all() 
+                    : Customer::whereIn('id', $request->selected_ids ?? [])->get();
+
+        if ($targets->isEmpty()) {
+            return back()->with('error', 'Tidak ada pelanggan yang dipilih.');
+        }
+
+        foreach ($targets as $t) {
+            // Menggunakan Service
+            $this->fonnte->sendMessage($t->nomor_wa, $request->message);
+        }
+
+        return back()->with('success', count($targets) . ' Pesan broadcast berhasil dikirim!');
+    }
+
+    // ==========================================
+    // LOGIKA CRUD PELANGGAN (TETAP SAMA)
+    // ==========================================
+
     public function index()
     {
-        $customers = Customer::with('paket')->get(); // Eager load paket
+        $customers = Customer::with('paket')->get();
         return view('admin.index', compact('customers'));
     }
 
     public function create()
     {
-        $pakets = Paket::all(); // Mengambil data paket untuk dropdown
+        $pakets = Paket::all();
         return view('admin.create', compact('pakets'));
     }
 

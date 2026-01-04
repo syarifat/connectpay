@@ -34,5 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'fonnte' => [
+        'token' => env('WA_TOKEN'), // Mengambil dari .env
+        'url'   => 'https://api.fonnte.com',
+    ],
 
 ];

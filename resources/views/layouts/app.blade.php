@@ -153,6 +153,11 @@
                                 <i class="bi bi-box me-1"></i> Data Paket
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link mx-1 {{ Request::is('admin/broadcast*') ? 'active' : '' }}" href="{{ route('admin.broadcast') }}">
+                                <i class="bi bi-whatsapp me-1"></i> Broadcast WA
+                            </a>
+                        </li>
                     @else
                         <li class="nav-item">
                             <a class="nav-link mx-1 {{ Request::is('pelanggan/dashboard') ? 'active' : '' }}" href="/pelanggan/dashboard">

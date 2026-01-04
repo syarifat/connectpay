@@ -22,6 +22,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/pelanggan/pembayaran/{id}', [AdminController::class, 'pembayaran'])->name('admin.pembayaran');
     Route::post('/pelanggan/pembayaran', [AdminController::class, 'storePembayaran'])->name('admin.pembayaran.store');
     Route::resource('pakets', PaketController::class);
+    Route::get('/broadcast', [AdminController::class, 'broadcast'])->name('admin.broadcast');
+    Route::post('/broadcast/send', [AdminController::class, 'sendBroadcast'])->name('admin.broadcast.send');
 });
 
 // Khusus Pelanggan
@@ -30,3 +32,5 @@ Route::middleware(['auth', 'role:pelanggan'])->prefix('pelanggan')->group(functi
     Route::get('/change-password', [AuthController::class, 'editPassword'])->name('password.edit');
     Route::post('/change-password', [AuthController::class, 'updatePassword'])->name('password.update');
 });
+
+Route::get('/cron/send-reminder', [AdminController::class, 'sendAutoReminder']);
