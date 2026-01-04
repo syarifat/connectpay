@@ -8,7 +8,7 @@
             <p class="text-muted">Pelanggan: <span class="text-dark fw-bold">{{ $customer->nama }}</span> ({{ $customer->id_pelanggan }})</p>
         </div>
         <div>
-            <a href="/admin/pelanggan" class="btn btn-outline-secondary me-2">Kembali</a>
+            <a href="/admin/dashboard" class="btn btn-outline-secondary me-2">Kembali</a>
             <button class="btn btn-connect px-4" data-bs-toggle="modal" data-bs-target="#modalBayar">
                 <i class="bi bi-cash-stack"></i> Input Bayar Baru
             </button>
