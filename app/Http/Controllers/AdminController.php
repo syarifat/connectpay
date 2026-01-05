@@ -80,30 +80,88 @@ class AdminController extends Controller
 
     public function sendAutoReminder(Request $request)
     {
+        // 1. Validasi Security Key
         if ($request->query('key') !== 'connectpay123') {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $today = Carbon::now('Asia/Jakarta');
+        $todayDay = $today->day;
+        
         $bulanIndo = [
             1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
         ];
-        $periode = $bulanIndo[$today->month] . ' ' . $today->year;
+        $bulanSekarang = $bulanIndo[$today->month];
+        $tahunSekarang = $today->year;
 
-        $customers = Customer::where('jatuh_tempo', $today->day)->get();
+        // 2. Cari pelanggan (Eager Load Paket dan User)
+        $customers = Customer::with(['user', 'paket'])->where('jatuh_tempo', $todayDay)->get();
 
         $sent = 0;
         foreach ($customers as $c) {
-            $nominal = $c->paket ? number_format($c->paket->harga, 0, ',', '.') : '0';
-            $pesan = "Halo *{$c->nama}*,\n\nMengingatkan bahwa hari ini jatuh tempo pembayaran internet periode *{$periode}*.\nTagihan: *Rp {$nominal}*\nID: *{$c->id_pelanggan}*\n\nTerima kasih.";
+            // 3. Cek apakah sudah ada catatan pembayaran untuk bulan dan tahun ini
+            $isLunas = Payment::where('customer_id', $c->id)
+                        ->where('bulan', $bulanSekarang)
+                        ->where('tahun', $tahunSekarang)
+                        ->exists();
 
-            // Menggunakan Service
-            $this->fonnte->sendMessage($c->nomor_wa, $pesan);
-            $sent++;
+            // 4. Jika BELUM LUNAS, kirim WA
+            if (!$isLunas) {
+                // Persiapan Data Pesan
+                // Menggunakan kolom 'harga' dari tabel pakets
+                $nominal = $c->paket ? number_format($c->paket->harga, 0, ',', '.') : '0';
+                $usernameDB = $c->user->username ?? $c->id_pelanggan;
+
+                // PENYESUAIAN DI SINI: Menggunakan kolom 'nama' dan 'speed' dari tabel pakets
+                $namaPaket = $c->paket->nama ?? '-';
+                $kecepatan = $c->paket->speed ?? '0'; 
+                $infoPaket = "{$namaPaket} - {$kecepatan}";
+
+                // Logika Pengecekan Password
+                $isDefaultPassword = \Illuminate\Support\Facades\Hash::check('123456', $c->user->password);
+                $passwordText = $isDefaultPassword ? '123456 (anda dapat merubah password)' : '(Sudah diubah oleh Anda)';
+
+                // Logika Periode: Hari ini sampai satu bulan ke depan (minus 1 hari)
+                $tglAwal = $today->day . ' ' . $bulanIndo[$today->month] . ' ' . $today->year;
+                $nextDate = $today->copy()->addMonth()->subDay();
+                $tglAkhir = $nextDate->day . ' ' . $bulanIndo[$nextDate->month] . ' ' . $nextDate->year;
+                $periodeLayanan = "$tglAwal - $tglAkhir";
+
+                // Format Pesan
+                $pesan = "*INI ADALAH PESAN OTOMATIS DARI SISTEM PENAGIHAN ConnectPay*\n\n" .
+                    "📢 *Pemberitahuan Tagihan WiFi Bulan Ini*\n\n" .
+                    "Halo Bapak/Ibu *{$c->nama}*,\n\n" .
+                    "Berikut rincian tagihan Anda:\n" .
+                    "Paket: *{$infoPaket}*\n" .
+                    "Tagihan: *Rp. {$nominal}*\n" .
+                    "Layanan: *{$periodeLayanan}*\n\n" .
+                    "Anda dapat melihat riwayat pembayaran melalui link berikut:\n" .
+                    "🔗 *https://connectpay-c1qi.vercel.app/*\n" .
+                    "Username: *{$usernameDB}*\n" .
+                    "Password: *{$passwordText}*\n\n" .
+                    "Teknisi akan melakukan penagihan secara langsung pada siang hingga sore hari.\n" .
+                    "Apabila Bapak/Ibu tidak berada di rumah, mohon konfirmasi dengan membalas pesan ini agar bisa dijadwalkan ulang.\n\n" .
+                    "Terima kasih atas kerja samanya 🙏\n" .
+                    "Salam,\n" .
+                    "*Tim Layanan WiFi*\n" .
+                    "---\n\n" .
+                    "*Catatan:*\n" .
+                    "*Nomor ini hanya digunakan untuk keperluan penagihan.*\n" .
+                    "*Jika WiFi mengalami gangguan, silakan hubungi teknisi di nomor berikut:*\n" .
+                    "📞 *087842949212* (Syarif)";
+
+                // 4. Kirim Pesan menggunakan FonnteService
+                $this->fonnte->sendMessage($c->nomor_wa, $pesan);
+                $sent++;
+            }
         }
 
-        return response()->json(['status' => 'success', 'sent' => $sent]);
+        return response()->json([
+            'status' => 'success', 
+            'message' => "Berhasil mengirim $sent pesan pengingat.",
+            'date' => $today->toDateString()
+        ]);
     }
 
     public function broadcast(Request $request)
