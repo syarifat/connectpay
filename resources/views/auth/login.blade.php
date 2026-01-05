@@ -24,6 +24,9 @@
                     <input type="password" name="password" class="form-control form-control-lg border-info-subtle" required>
                 </div>
                 <button type="submit" class="btn btn-connect w-100 py-2 fw-bold">Masuk</button>
+                <div class="mt-3 text-center">
+                    <a href="{{ route('password.request') }}" class="text-decoration-none">Lupa Password?</a>
+                </div>
             </form>
         </div>
     </div>
