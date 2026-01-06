@@ -29,6 +29,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::resource('pakets', PaketController::class);
     Route::get('/broadcast', [AdminController::class, 'broadcast'])->name('admin.broadcast');
     Route::post('/broadcast/send', [AdminController::class, 'sendBroadcast'])->name('admin.broadcast.send');
+    Route::get('/admin/logs', [AdminController::class, 'loginLogs'])->name('admin.logs');
 });
 
 // Khusus Pelanggan

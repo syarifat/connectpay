@@ -355,4 +355,14 @@ class AdminController extends Controller
         Payment::create($request->all());
         return redirect()->back()->with('success', 'Pembayaran dicatat!');
     }
+
+    public function loginLogs()
+    {
+        // Mengambil log terbaru, diurutkan dari yang paling baru
+        $logs = \App\Models\LoginLog::with('user.customer')
+                    ->orderBy('login_at', 'desc')
+                    ->paginate(20);
+
+        return view('admin.logs', compact('logs'));
+    }
 }

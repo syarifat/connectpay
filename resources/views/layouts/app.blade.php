@@ -158,6 +158,11 @@
                                 <i class="bi bi-whatsapp me-1"></i> Broadcast WA
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link mx-1 {{ Request::is('admin/logs*') ? 'active' : '' }}" href="{{ route('admin.logs') }}">
+                                <i class="bi bi-clock-history me-1"></i> Log Aktivitas
+                            </a>
+                        </li>
                     @else
                         <li class="nav-item">
                             <a class="nav-link mx-1 {{ Request::is('pelanggan/dashboard') ? 'active' : '' }}" href="/pelanggan/dashboard">
