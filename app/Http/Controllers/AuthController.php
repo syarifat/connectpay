@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash; // Tambahkan ini
 use App\Models\User; // Tambahkan ini
 use App\Models\LoginLog;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -24,7 +25,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            
+
             LoginLog::create([
             'user_id'    => auth()->user()->id,
             'ip_address' => $request->ip(),
