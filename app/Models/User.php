@@ -45,4 +45,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function customer()
+    {
+        // One-to-One: Satu User memiliki satu data Customer
+        return $this->hasOne(Customer::class, 'user_id');
+    }
 }
