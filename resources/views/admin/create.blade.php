@@ -7,7 +7,6 @@
             <h4 class="fw-bold text-primary">Tambah Pelanggan Baru</h4>
             <a href="/admin/pelanggan" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
         </div>
-
         <div class="card-custom bg-white p-4">
             <form action="{{ route('pelanggan.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
