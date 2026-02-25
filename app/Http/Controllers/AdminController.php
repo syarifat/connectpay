@@ -137,7 +137,7 @@ class AdminController extends Controller
                     "Tagihan: *Rp. {$nominal}*\n" .
                     "Layanan: *{$periodeLayanan}*\n\n" .
                     "Anda dapat melihat riwayat pembayaran melalui link berikut:\n" .
-                    "🔗 *https://connectpay-c1qi.vercel.app/*\n" .
+                    "🔗 *https://connectpay.sat-project.me//*\n" .
                     "Username: *{$usernameDB}*\n" .
                     "Password: *{$passwordText}*\n\n" .
                     "Teknisi akan melakukan penagihan secara langsung pada siang hingga sore hari.\n" .
