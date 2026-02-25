@@ -3,14 +3,20 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold text-primary">Edit Paket Internet</h4>
-            <a href="{{ route('pakets.index') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Kembali
+        {{-- Page Header --}}
+        <div class="d-flex justify-content-between align-items-center mb-4 cp-page-header">
+            <div>
+                <h1 class="cp-page-title">
+                    <i class="bi bi-pencil-square me-2" style="color: var(--primary);"></i>Edit Paket
+                </h1>
+                <p class="cp-page-subtitle">Perbarui informasi paket internet</p>
+            </div>
+            <a href="{{ route('pakets.index') }}" class="btn btn-light border px-3" style="border-radius: var(--radius-sm);">
+                <i class="bi bi-arrow-left me-1"></i> Kembali
             </a>
         </div>
 
-        <div class="card-custom bg-white p-4">
+        <div class="cp-card">
             <form action="{{ route('pakets.update', $paket->id) }}" method="POST">
                 @csrf
                 @method('PUT')
@@ -37,15 +43,15 @@
                     <label class="form-label fw-bold">Harga Bulanan (Rp)</label>
                     <input type="number" name="harga" class="form-control @error('harga') is-invalid @enderror" 
                            value="{{ old('harga', $paket->harga) }}" placeholder="Contoh: 350000" required>
-                    <small class="text-muted italic">Masukkan angka saja tanpa titik atau koma.</small>
+                    <small style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">Masukkan angka saja tanpa titik atau koma.</small>
                     @error('harga')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
 
-                <div class="alert alert-warning border-0 small mb-4">
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                    Perubahan pada harga paket akan otomatis terlihat pada tagihan baru pelanggan di bulan depan.
+                <div style="background: var(--warning-subtle); border-radius: var(--radius-sm); padding: 12px 16px; color: #92400e; font-size: 0.85rem; margin-bottom: 20px;">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    Perubahan harga paket akan otomatis terlihat pada tagihan baru pelanggan di bulan depan.
                 </div>
 
                 <button type="submit" class="btn btn-connect w-100 py-2 fw-bold">

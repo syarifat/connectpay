@@ -2,54 +2,74 @@
 
 @section('content')
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    {{-- Page Header --}}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 cp-page-header">
         <div>
-            <h4 class="fw-bold text-primary">Riwayat Pembayaran</h4>
-            <p class="text-muted">Pelanggan: <span class="text-dark fw-bold">{{ $customer->nama }}</span> ({{ $customer->id_pelanggan }})</p>
+            <h1 class="cp-page-title">
+                <i class="bi bi-cash-stack me-2" style="color: var(--primary);"></i>Riwayat Pembayaran
+            </h1>
+            <p class="cp-page-subtitle">
+                Pelanggan: <strong style="color: var(--text-primary);">{{ $customer->nama }}</strong> 
+                <span class="cp-badge info ms-1">{{ $customer->id_pelanggan }}</span>
+            </p>
         </div>
-        <div>
-            <a href="/admin/dashboard" class="btn btn-outline-secondary me-2">Kembali</a>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <a href="/admin/dashboard" class="btn btn-light border px-3" style="border-radius: var(--radius-sm);">
+                <i class="bi bi-arrow-left me-1"></i> Kembali
+            </a>
             <button class="btn btn-connect px-4" data-bs-toggle="modal" data-bs-target="#modalBayar">
-                <i class="bi bi-cash-stack"></i> Input Bayar Baru
+                <i class="bi bi-plus-lg me-1"></i> Input Bayar Baru
             </button>
         </div>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="cp-alert success mb-4 alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <span>{{ session('success') }}</span>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    <div class="card-custom bg-white p-4">
+    {{-- Payment History --}}
+    <div class="cp-card">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
                         <th>Bulan / Tahun</th>
                         <th>Tanggal Bayar</th>
                         <th>Nominal</th>
                         <th>Metode</th>
-                        <th>Status</th>
+                        <th class="text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($payments as $p)
                     <tr>
-                        <td class="fw-bold">{{ $p->bulan }} {{ $p->tahun }}</td>
-                        <td>{{ date('d M Y', strtotime($p->tanggal_bayar)) }}</td>
-                        <td class="text-primary fw-bold">Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
+                        <td class="fw-bold" style="color: var(--text-primary);">{{ $p->bulan }} {{ $p->tahun }}</td>
+                        <td style="color: var(--text-secondary);">{{ date('d M Y', strtotime($p->tanggal_bayar)) }}</td>
+                        <td class="fw-bold" style="color: var(--primary);">Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
                         <td>
-                            <span class="badge {{ $p->metode == 'Transfer' ? 'bg-info-subtle text-info' : 'bg-secondary-subtle text-secondary' }} px-3">
+                            <span class="cp-badge {{ $p->metode == 'Transfer' ? 'info' : '' }}" 
+                                  style="{{ $p->metode != 'Transfer' ? 'background: var(--bg-alt); color: var(--text-secondary);' : '' }}">
                                 {{ $p->metode }}
                             </span>
                         </td>
-                        <td><span class="badge bg-success"><i class="bi bi-check-lg"></i> LUNAS</span></td>
+                        <td class="text-center">
+                            <span class="cp-badge success">
+                                <i class="bi bi-check-lg me-1"></i> LUNAS
+                            </span>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Belum ada riwayat pembayaran untuk pelanggan ini.</td>
+                        <td colspan="5">
+                            <div class="cp-empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p>Belum ada riwayat pembayaran untuk pelanggan ini.</p>
+                            </div>
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -58,18 +78,21 @@
     </div>
 </div>
 
+{{-- Modal Input Pembayaran --}}
 <div class="modal fade" id="modalBayar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form action="{{ route('admin.pembayaran.store') }}" method="POST" class="modal-content border-0 shadow">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('admin.pembayaran.store') }}" method="POST" class="modal-content">
             @csrf
             <input type="hidden" name="customer_id" value="{{ $customer->id }}">
             
-            <div class="modal-header border-0 bg-light">
-                <h5 class="modal-title fw-bold text-primary">Input Pembayaran Baru</h5>
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" style="color: var(--text-primary);">
+                    <i class="bi bi-cash-coin me-2" style="color: var(--primary);"></i>Input Pembayaran
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <div class="modal-body p-4">
+            <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">Bulan</label>
@@ -108,9 +131,11 @@
                 </div>
             </div>
             
-            <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Batal</button>
-                <button type="submit" class="btn btn-connect px-4">Simpan Pembayaran</button>
+            <div class="modal-footer" style="gap: 8px;">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: var(--radius-sm);">Batal</button>
+                <button type="submit" class="btn btn-connect px-4">
+                    <i class="bi bi-check-lg me-1"></i> Simpan Pembayaran
+                </button>
             </div>
         </form>
     </div>

@@ -2,21 +2,36 @@
 
 @section('content')
 <div class="row justify-content-center">
-    <div class="col-md-10">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold text-primary">Edit Data Pelanggan</h4>
-            <a href="/admin/pelanggan" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+    <div class="col-lg-10">
+        {{-- Page Header --}}
+        <div class="d-flex justify-content-between align-items-center mb-4 cp-page-header">
+            <div>
+                <h1 class="cp-page-title">
+                    <i class="bi bi-pencil-square me-2" style="color: var(--primary);"></i>Edit Pelanggan
+                </h1>
+                <p class="cp-page-subtitle">Perbarui data pelanggan <strong>{{ $customer->nama }}</strong></p>
+            </div>
+            <a href="/admin/pelanggan" class="btn btn-light border px-3" style="border-radius: var(--radius-sm);">
+                <i class="bi bi-arrow-left me-1"></i> Kembali
+            </a>
         </div>
         
-        <div class="card-custom bg-white p-4">
+        {{-- Form Card --}}
+        <div class="cp-card">
             <form action="{{ route('pelanggan.update', $customer->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="row">
-                    <div class="col-md-6 border-end">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">ID Pelanggan (Read-only)</label>
-                            <input type="text" class="form-control bg-light" value="{{ $customer->id_pelanggan }}" readonly>
+                    {{-- Left Column --}}
+                    <div class="col-md-6">
+                        <div class="mb-1 pb-2" style="border-bottom: 2px solid var(--primary-subtle);">
+                            <h6 class="fw-bold mb-0" style="color: var(--primary);">
+                                <i class="bi bi-person me-1"></i> Informasi Pribadi
+                            </h6>
+                        </div>
+                        <div class="mt-3 mb-3">
+                            <label class="form-label fw-bold">ID Pelanggan</label>
+                            <input type="text" class="form-control" value="{{ $customer->id_pelanggan }}" readonly style="background: var(--bg); opacity: 0.7;">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Nama Lengkap</label>
@@ -28,7 +43,12 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Nomor WhatsApp</label>
-                            <input type="text" name="nomor_wa" class="form-control" value="{{ $customer->nomor_wa }}" required>
+                            <div class="input-group">
+                                <span class="input-group-text" style="background: #dcfce7; color: #16a34a; border: 1.5px solid var(--border); border-right: 0;">
+                                    <i class="bi bi-whatsapp"></i>
+                                </span>
+                                <input type="text" name="nomor_wa" class="form-control" value="{{ $customer->nomor_wa }}" required>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Alamat Lengkap</label>
@@ -36,8 +56,14 @@
                         </div>
                     </div>
 
+                    {{-- Right Column --}}
                     <div class="col-md-6">
-                        <div class="mb-3">
+                        <div class="mb-1 pb-2" style="border-bottom: 2px solid var(--primary-subtle);">
+                            <h6 class="fw-bold mb-0" style="color: var(--primary);">
+                                <i class="bi bi-wifi me-1"></i> Informasi Layanan
+                            </h6>
+                        </div>
+                        <div class="mt-3 mb-3">
                             <label class="form-label fw-bold">Pilih Paket Internet</label>
                             <select name="paket_id" class="form-select" required>
                                 @foreach($pakets as $p)
@@ -48,7 +74,9 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-danger">Tanggal Jatuh Tempo</label>
+                            <label class="form-label fw-bold" style="color: var(--danger);">
+                                <i class="bi bi-calendar-event me-1"></i> Tanggal Jatuh Tempo
+                            </label>
                             <input type="number" name="jatuh_tempo" class="form-control" min="1" max="31" value="{{ $customer->jatuh_tempo }}" required>
                         </div>
                         <div class="mb-3">
@@ -59,7 +87,7 @@
                             <label class="form-label fw-bold">Foto Rumah</label>
                             @if($customer->foto_rumah)
                                 <div class="mb-2">
-                                    <img src="{{ asset($customer->foto_rumah) }}" width="100" class="img-thumbnail border-primary">
+                                    <img src="{{ asset($customer->foto_rumah) }}" width="100" style="border-radius: var(--radius-sm); border: 2px solid var(--primary-light);">
                                 </div>
                             @endif
                             <input type="file" name="foto_rumah" class="form-control">
@@ -67,9 +95,11 @@
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-connect w-100 py-2 fw-bold"><i class="bi bi-save"></i> Simpan Perubahan</button>
-                </div>
+                <hr class="my-4" style="border-color: var(--border);">
+
+                <button type="submit" class="btn btn-connect w-100 py-3 fw-bold" style="font-size: 0.95rem;">
+                    <i class="bi bi-save me-2"></i> Simpan Perubahan
+                </button>
             </form>
         </div>
     </div>
